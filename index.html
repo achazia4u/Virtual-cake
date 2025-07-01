@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Happy Birthday Angel</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap');
+
+    body {
+      margin: 0;
+      font-family: 'Great Vibes', cursive;
+      background: repeating-linear-gradient(
+        45deg,
+        #fff0f5,
+        #fff0f5 40px,
+        #ffe4e1 40px,
+        #ffe4e1 80px
+      );
+      background-size: 100% 100%;
+      color: #4b2e1e;
+      text-align: center;
+      overflow: hidden;
+    }
+
+    h1 {
+      margin-top: 40px;
+      font-size: 55px;
+      color: #5a3e2b;
+      text-shadow: 2px 2px #fff;
+    }
+
+    .cake {
+      margin: 50px auto;
+      position: relative;
+    }
+
+    .layer {
+      height: 60px;
+      margin: 0 auto;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    .layer1 {
+      width: 200px;
+      background: #5d4037;
+    }
+
+    .layer2 {
+      width: 150px;
+      background: #4e342e;
+    }
+
+    .layer3 {
+      width: 100px;
+      background: #3e2723;
+      position: relative;
+    }
+
+    .cake-name {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: white;
+      font-size: 22px;
+      font-weight: bold;
+    }
+
+    .candle {
+      position: absolute;
+      top: -70px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 10px;
+      height: 40px;
+      background: #ffc107;
+      border-radius: 5px;
+    }
+
+    .flame {
+      position: absolute;
+      top: -20px;
+      left: 50%;
+      width: 15px;
+      height: 15px;
+      background: radial-gradient(ellipse at center, #ffeb3b 0%, #ff5722 70%, transparent 80%);
+      border-radius: 50%;
+      transform: translateX(-50%);
+      animation: flicker 0.15s infinite alternate;
+    }
+
+    @keyframes flicker {
+      from { transform: translateX(-50%) scale(1); }
+      to   { transform: translateX(-50%) scale(1.2); }
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    p {
+      font-size: 20px;
+      margin-top: 20px;
+    }
+
+    canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      z-index: 999;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Happy Birthday!</h1>
+
+  <div class="cake">
+    <div class="layer layer1"></div>
+    <div class="layer layer2"></div>
+    <div class="layer layer3">
+      <div class="cake-name">Angel</div>
+    </div>
+    <div class="candle">
+      <div class="flame" id="flame"></div>
+    </div>
+  </div>
+
+  <p>Blow into your mic to blow out the candle 🎤</p>
+
+  <audio id="birthdaySong" autoplay loop>
+    <source src="https://cdn.pixabay.com/download/audio/2023/04/22/audio_18cd93479c.mp3?filename=birthday-celebration-143105.mp3" type="audio/mpeg">
+    Your browser does not support the audio element.
+  </audio>
+
+  <canvas id="confetti-canvas"></canvas>
+
+  <script>
+    const flame = document.getElementById("flame");
+    const confettiCanvas = document.getElementById("confetti-canvas");
+    const ctx = confettiCanvas.getContext("2d");
+    confettiCanvas.width = window.innerWidth;
+    confettiCanvas.height = window.innerHeight;
+
+    // Confetti settings
+    let confetti = [];
+    const confettiCount = 200;
+    for (let i = 0; i < confettiCount; i++) {
+      confetti.push({
+        x: Math.random() * confettiCanvas.width,
+        y: Math.random() * confettiCanvas.height - confettiCanvas.height,
+        r: Math.random() * 6 + 4,
+        d: Math.random() * confettiCount,
+        color: `hsl(${Math.random() * 360}, 100%, 70%)`,
+        tilt: Math.floor(Math.random() * 10) - 10,
+        tiltAngleIncrement: Math.random() * 0.07 + .05,
+        tiltAngle: 0
+      });
+    }
+
+    function drawConfetti() {
+      ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+      confetti.forEach((c, i) => {
+        ctx.beginPath();
+        ctx.lineWidth = c.r / 2;
+        ctx.strokeStyle = c.color;
+        ctx.moveTo(c.x + c.tilt + c.r / 3, c.y);
+        ctx.lineTo(c.x + c.tilt, c.y + c.tilt + c.r / 3);
+        ctx.stroke();
+      });
+      updateConfetti();
+    }
+
+    function updateConfetti() {
+      confetti.forEach((c, i) => {
+        c.tiltAngle += c.tiltAngleIncrement;
+        c.y += (Math.cos(c.d) + 3 + c.r / 2) / 2;
+        c.tilt = Math.sin(c.tiltAngle - (i / 3)) * 15;
+
+        if (c.y > confettiCanvas.height) {
+          c.y = -10;
+          c.x = Math.random() * confettiCanvas.width;
+        }
+      });
+    }
+
+    function startConfetti() {
+      setInterval(drawConfetti, 20);
+    }
+
+    // Mic detection
+    navigator.mediaDevices.getUserMedia({ audio: true })
+      .then(stream => {
+        const audioContext = new AudioContext();
+        const mic = audioContext.createMediaStreamSource(stream);
+        const analyser = audioContext.createAnalyser();
+        mic.connect(analyser);
+        analyser.fftSize = 512;
+        const bufferLength = analyser.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+
+        function detectBlow() {
+          analyser.getByteFrequencyData(dataArray);
+          const volume = dataArray.reduce((a, b) => a + b, 0) / bufferLength;
+          if (volume > 60 && !flame.classList.contains("hidden")) {
+            flame.classList.add("hidden");
+            startConfetti();
+          }
+          requestAnimationFrame(detectBlow);
+        }
+
+        detectBlow();
+      })
+      .catch(err => {
+        alert("Please allow microphone access to blow the candle 🎤");
+        console.error(err);
+      });
+  </script>
+
+</body>
+</html>
