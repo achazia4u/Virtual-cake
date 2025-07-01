@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Happy Birthday My Love</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: url('https://i.imgur.com/FaI2YZa.jpg') no-repeat center center fixed;
+      background-size: cover;
+      font-family: 'Comic Sans MS', cursive, sans-serif;
+      color: #fff;
+      text-align: center;
+    }
+
+    h1 {
+      margin-top: 40px;
+      font-size: 3em;
+      color: #ffccff;
+      text-shadow: 2px 2px #000;
+    }
+
+    .cake {
+      position: relative;
+      margin: 50px auto;
+      width: 200px;
+      height: 200px;
+      background: chocolate;
+      border-radius: 100px 100px 20px 20px;
+      box-shadow: inset 0 -10px #442200;
+    }
+
+    .candle {
+      position: absolute;
+      top: -50px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 20px;
+      height: 50px;
+      background: white;
+      border-radius: 10px;
+    }
+
+    .flame {
+      position: absolute;
+      top: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 15px;
+      height: 15px;
+      background: yellow;
+      border-radius: 50%;
+      box-shadow: 0 0 20px yellow;
+      animation: flicker 0.2s infinite alternate;
+    }
+
+    @keyframes flicker {
+      from { transform: translateX(-50%) scale(1); opacity: 1; }
+      to { transform: translateX(-50%) scale(1.2); opacity: 0.7; }
+    }
+
+    .balloons {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: -1;
+    }
+
+    .balloon {
+      width: 50px;
+      height: 70px;
+      border-radius: 50% 50% 50% 50%;
+      background-color: red;
+      display: inline-block;
+      margin: 20px;
+      animation: float 4s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-20px); }
+    }
+  </style>
+</head>
+<body>
+  <h1>🎉 Happy Birthday My Love 🎉</h1>
+  <div class="cake">
+    <div class="candle">
+      <div class="flame" id="flame"></div>
+    </div>
+  </div>
+
+  <div class="balloons">
+    <div class="balloon" style="background-color: red;"></div>
+    <div class="balloon" style="background-color: pink;"></div>
+    <div class="balloon" style="background-color: yellow;"></div>
+    <div class="balloon" style="background-color: blue;"></div>
+  </div>
+
+  <audio id="birthdayMusic" autoplay loop>
+    <source src="https://www2.cs.uic.edu/~i101/SoundFiles/HappyBirthday.mid" type="audio/midi">
+    Your browser does not support the audio element.
+  </audio>
+
+  <script>
+    const flame = document.getElementById('flame');
+
+    async function listenToMic() {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const mic = audioContext.createMediaStreamSource(stream);
+      const analyser = audioContext.createAnalyser();
+      mic.connect(analyser);
+      const data = new Uint8Array(analyser.frequencyBinCount);
+
+      function checkBlow() {
+        analyser.getByteFrequencyData(data);
+        let volume = data.reduce((a, b) => a + b) / data.length;
+        if (volume > 30) {
+          flame.style.display = 'none';
+        } else {
+          flame.style.display = 'block';
+        }
+        requestAnimationFrame(checkBlow);
+      }
+
+      checkBlow();
+    }
+
+    listenToMic();
+  </script>
+</body>
+</html>
