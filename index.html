@@ -1,0 +1,98 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Virtual Cake with Blow-to-Extinguish</title>
+  <style>
+    body {
+      background: #ffe0f8;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .cake {
+      position: relative;
+      width: 200px;
+      height: 120px;
+      background: #ffb6c1;
+      border-radius: 10px;
+    }
+    .candle {
+      position: absolute;
+      bottom: 110px;
+      width: 10px;
+      height: 40px;
+      background: #333;
+    }
+    .candle:nth-child(1) { left: 40px; }
+    .candle:nth-child(2) { left: 95px; }
+    .candle:nth-child(3) { left: 150px; }
+    .flame {
+      position: absolute;
+      top: -15px;
+      left: 0;
+      right: 0;
+      margin: 0 auto;
+      width: 10px;
+      height: 15px;
+      background: orange;
+      border-radius: 50%;
+      animation: flicker 0.2s infinite;
+    }
+    @keyframes flicker {
+      0%   { transform: scale(1) rotate(0deg); }
+      50%  { transform: scale(1.1) rotate(2deg); }
+      100% { transform: scale(1) rotate(-2deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="cake">
+    <div class="candle"><div class="flame"></div></div>
+    <div class="candle"><div class="flame"></div></div>
+    <div class="candle"><div class="flame"></div></div>
+  </div>
+
+  <script>
+    async function start() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const mic = ctx.createMediaStreamSource(stream);
+        const analyser = ctx.createAnalyser();
+        analyser.fftSize = 256;
+        mic.connect(analyser);
+
+        const data = new Uint8Array(analyser.frequencyBinCount);
+        const flames = document.querySelectorAll('.flame');
+
+        function detect() {
+          analyser.getByteTimeDomainData(data);
+          let sum = 0;
+          for (let v of data) sum += Math.abs(v - 128);
+          const vol = sum / data.length;
+
+          if (vol > 10) {
+            flames.forEach(f => f.style.visibility = 'hidden');
+          } else {
+            flames.forEach(f => f.style.visibility = 'visible');
+          }
+          requestAnimationFrame(detect);
+        }
+
+        detect();
+      } catch (err) {
+        console.error('Microphone access error:', err);
+      }
+    }
+
+    document.body.addEventListener('click', () => {
+      start();
+      document.body.removeEventListener('click', this);
+    });
+  </script>
+</body>
+</html>
